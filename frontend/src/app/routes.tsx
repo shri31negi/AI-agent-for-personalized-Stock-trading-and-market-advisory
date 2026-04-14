@@ -9,12 +9,12 @@ import { Signup } from "./components/auth/Signup";
 import { Login } from "./components/auth/Login";
 import { Onboarding } from "./components/auth/Onboarding";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { RootRedirect } from "./components/RootRedirect";
+import { Home } from "./components/Home";
 
 export const router = createBrowserRouter([
   { 
     path: "/", 
-    Component: RootRedirect
+    Component: Home
   },
   { 
     path: "/signup", 

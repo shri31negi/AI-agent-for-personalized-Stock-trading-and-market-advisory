@@ -1,18 +1,11 @@
-import express from "express";
-import { getTrendingStocks, getStockHistory, getStockQuote, getMultipleQuotes } from "../controllers/marketController.js";
-
+const express = require('express');
 const router = express.Router();
+const marketController = require('../controllers/marketController');
 
-// Get predefined trending stocks
-router.get("/trending", getTrendingStocks);
+router.get('/trending', marketController.getTrendingStocks);
+router.get('/quote/:symbol', marketController.getStockQuote);
+router.get('/history/:symbol', marketController.getStockHistory);
+router.get('/technicals/:symbol', marketController.getStockTechnicals);
+router.get('/search', marketController.searchStocks);
 
-// Get specific stock quote
-router.get("/quote/:symbol", getStockQuote);
-
-// Get bulk stock quotes
-router.get("/quotes", getMultipleQuotes);
-
-// Get historical chart data
-router.get("/history/:symbol", getStockHistory);
-
-export default router;
+module.exports = router;

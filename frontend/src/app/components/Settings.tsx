@@ -22,12 +22,7 @@ export function Settings() {
   const [riskLevel, setRiskLevel] = useState(50); // 0-100 scale
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-purple-400">Settings</h2>
-        <p className="text-muted-foreground mt-1">Customize your trading preferences and profile</p>
-      </div>
-
+    <div className="p-8 pt-0 text-foreground">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Settings */}
         <div className="lg:col-span-2 space-y-6">
@@ -91,32 +86,32 @@ export function Settings() {
               <div>
                 <Label className="mb-3 block">Primary Investment Goal</Label>
                 <RadioGroup defaultValue={userProfile.investmentGoal}>
-                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                  <div className="flex items-center space-x-2 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
                     <RadioGroupItem value="income" id="income" />
                     <Label htmlFor="income" className="flex-1 cursor-pointer">
                       <p className="font-medium">Income Generation</p>
-                      <p className="text-sm text-gray-600">Focus on dividends and regular returns</p>
+                      <p className="text-sm text-muted-foreground">Focus on dividends and regular returns</p>
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                  <div className="flex items-center space-x-2 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
                     <RadioGroupItem value="growth" id="growth" />
                     <Label htmlFor="growth" className="flex-1 cursor-pointer">
                       <p className="font-medium">Capital Growth</p>
-                      <p className="text-sm text-gray-600">Build wealth through appreciation</p>
+                      <p className="text-sm text-muted-foreground">Build wealth through appreciation</p>
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2 p-3 border rounded-lg">
                     <RadioGroupItem value="balanced" id="balanced" />
                     <Label htmlFor="balanced" className="flex-1 cursor-pointer">
                       <p className="font-medium">Balanced</p>
-                      <p className="text-sm text-gray-600">Mix of income and growth</p>
+                      <p className="text-sm text-muted-foreground">Mix of income and growth</p>
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                  <div className="flex items-center space-x-2 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
                     <RadioGroupItem value="preservation" id="preservation" />
                     <Label htmlFor="preservation" className="flex-1 cursor-pointer">
                       <p className="font-medium">Capital Preservation</p>
-                      <p className="text-sm text-gray-600">Protect existing wealth</p>
+                      <p className="text-sm text-muted-foreground">Protect existing wealth</p>
                     </Label>
                   </div>
                 </RadioGroup>
@@ -153,32 +148,32 @@ export function Settings() {
 
             <div className="space-y-4">
               <RadioGroup defaultValue={userProfile.tradingStyle}>
-                <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                <div className="flex items-center space-x-2 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
                   <RadioGroupItem value="day" id="day" />
                   <Label htmlFor="day" className="flex-1 cursor-pointer">
                     <p className="font-medium">Day Trading</p>
-                    <p className="text-sm text-gray-600">Open and close positions within the same day</p>
+                    <p className="text-sm text-muted-foreground">Open and close positions within the same day</p>
                   </Label>
                 </div>
-                <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                <div className="flex items-center space-x-2 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
                   <RadioGroupItem value="swing" id="swing" />
                   <Label htmlFor="swing" className="flex-1 cursor-pointer">
                     <p className="font-medium">Swing Trading</p>
-                    <p className="text-sm text-gray-600">Hold positions for days to weeks</p>
+                    <p className="text-sm text-muted-foreground">Hold positions for days to weeks</p>
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2 p-3 border rounded-lg">
                   <RadioGroupItem value="position" id="position" />
                   <Label htmlFor="position" className="flex-1 cursor-pointer">
                     <p className="font-medium">Position Trading</p>
-                    <p className="text-sm text-gray-600">Hold positions for weeks to months</p>
+                    <p className="text-sm text-muted-foreground">Hold positions for weeks to months</p>
                   </Label>
                 </div>
-                <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                <div className="flex items-center space-x-2 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
                   <RadioGroupItem value="longterm" id="longterm" />
                   <Label htmlFor="longterm" className="flex-1 cursor-pointer">
                     <p className="font-medium">Long-term Investing</p>
-                    <p className="text-sm text-gray-600">Buy and hold for years</p>
+                    <p className="text-sm text-muted-foreground">Buy and hold for years</p>
                   </Label>
                 </div>
               </RadioGroup>
@@ -216,15 +211,15 @@ export function Settings() {
                   step={1}
                   className="mb-2"
                 />
-                <div className="flex justify-between text-xs text-gray-500">
+                <div className="flex justify-between text-xs text-muted-foreground mt-2">
                   <span>Low Risk</span>
                   <span>Medium Risk</span>
                   <span>High Risk</span>
                 </div>
               </div>
 
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-700">
+              <div className="p-4 bg-muted/30 border border-border rounded-lg">
+                <p className="text-sm text-foreground">
                   {riskLevel < 33 && "You prefer stable, low-risk investments with predictable returns. The AI will suggest blue-chip stocks, bonds, and dividend-paying companies."}
                   {riskLevel >= 33 && riskLevel < 66 && "You're comfortable with moderate risk for potential higher returns. The AI will balance growth stocks with stable investments."}
                   {riskLevel >= 66 && "You're willing to take higher risks for potentially higher rewards. The AI will suggest growth stocks, emerging sectors, and volatile opportunities."}

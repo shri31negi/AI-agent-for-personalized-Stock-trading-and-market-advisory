@@ -8,7 +8,9 @@ export interface Stock {
   marketCap: number;
   pe?: number;
   sector: string;
+  currency?: string; // New field for USD, INR, etc.
 }
+
 
 export interface PortfolioHolding {
   symbol: string;
@@ -43,70 +45,77 @@ export const trendingStocks: Stock[] = [
   {
     symbol: "AAPL",
     name: "Apple Inc.",
-    price: 178.42,
-    change: 2.34,
-    changePercent: 1.33,
-    volume: 52430000,
+    price: 185.92,
+    change: 1.25,
+    changePercent: 0.68,
+    volume: 52000000,
     marketCap: 2800000000000,
-    pe: 28.5,
-    sector: "Technology"
+    pe: 29.5,
+    sector: "Technology",
+    currency: "USD"
+  },
+  {
+    symbol: "RELIANCE.NS",
+    name: "Reliance Industries Limited",
+    price: 2950.45,
+    change: 45.20,
+    changePercent: 1.55,
+    volume: 5000000,
+    marketCap: 20000000000000,
+    pe: 25.8,
+    sector: "Energy",
+    currency: "INR"
   },
   {
     symbol: "NVDA",
     name: "NVIDIA Corporation",
-    price: 875.28,
-    change: 15.67,
-    changePercent: 1.82,
-    volume: 48920000,
-    marketCap: 2150000000000,
-    pe: 65.2,
-    sector: "Technology"
+    price: 726.13,
+    change: 15.42,
+    changePercent: 2.17,
+    volume: 44000000,
+    marketCap: 1800000000000,
+    pe: 95.2,
+    sector: "Technology",
+    currency: "USD"
   },
   {
-    symbol: "MSFT",
-    name: "Microsoft Corporation",
-    price: 412.56,
-    change: -3.21,
-    changePercent: -0.77,
-    volume: 31240000,
-    marketCap: 3070000000000,
-    pe: 35.8,
-    sector: "Technology"
+    symbol: "TCS.NS",
+    name: "Tata Consultancy Services",
+    price: 4120.10,
+    change: -12.30,
+    changePercent: -0.30,
+    volume: 2000000,
+    marketCap: 15000000000000,
+    pe: 30.2,
+    sector: "Technology",
+    currency: "INR"
+  },
+  {
+    symbol: "HDFCBANK.NS",
+    name: "HDFC Bank Limited",
+    price: 1450.25,
+    change: 5.10,
+    changePercent: 0.35,
+    volume: 15000000,
+    marketCap: 11000000000000,
+    pe: 18.5,
+    sector: "Financial Services",
+    currency: "INR"
   },
   {
     symbol: "TSLA",
     name: "Tesla, Inc.",
-    price: 195.33,
-    change: 8.94,
-    changePercent: 4.80,
-    volume: 98560000,
-    marketCap: 620000000000,
-    pe: 52.3,
-    sector: "Automotive"
-  },
-  {
-    symbol: "GOOGL",
-    name: "Alphabet Inc.",
-    price: 142.18,
-    change: 1.56,
-    changePercent: 1.11,
-    volume: 28340000,
-    marketCap: 1780000000000,
-    pe: 24.6,
-    sector: "Technology"
-  },
-  {
-    symbol: "AMZN",
-    name: "Amazon.com Inc.",
-    price: 178.92,
-    change: -2.14,
-    changePercent: -1.18,
-    volume: 42180000,
-    marketCap: 1850000000000,
-    pe: 48.2,
-    sector: "Consumer Cyclical"
+    price: 181.06,
+    change: -3.45,
+    changePercent: -1.87,
+    volume: 105000000,
+    marketCap: 570000000000,
+    pe: 45.3,
+    sector: "Automotive",
+    currency: "USD"
   }
 ];
+
 
 export const portfolioHoldings: PortfolioHolding[] = [
   {
@@ -154,33 +163,33 @@ export const portfolioHoldings: PortfolioHolding[] = [
 export const marketNews: MarketNews[] = [
   {
     id: "1",
-    title: "Federal Reserve Signals Potential Rate Cut in Q2",
-    summary: "Fed officials hint at possible interest rate reduction following encouraging inflation data.",
-    source: "Financial Times",
+    title: "Tech sector showing strong momentum",
+    summary: "Technology companies are showing strong growth this week due to good earnings reports.",
+    source: "Market Update",
     timestamp: "2 hours ago",
     sentiment: "positive"
   },
   {
     id: "2",
-    title: "Tech Sector Rally Continues Amid AI Optimism",
-    summary: "Technology stocks surge as investors bet on AI-driven productivity gains.",
-    source: "Bloomberg",
+    title: "Energy sector seeing some changes",
+    summary: "Energy prices are shifting, which might cause some movement in energy-related investments.",
+    source: "Daily Brief",
     timestamp: "4 hours ago",
-    sentiment: "positive"
+    sentiment: "neutral"
   },
   {
     id: "3",
-    title: "Energy Prices Decline on Increased Supply",
-    summary: "Oil and natural gas prices drop as production increases globally.",
-    source: "Reuters",
+    title: "Market remains steady today",
+    summary: "The overall market is staying very calm as people wait for upcoming economic updates.",
+    source: "Update",
     timestamp: "5 hours ago",
     sentiment: "neutral"
   },
   {
     id: "4",
-    title: "Retail Earnings Beat Expectations",
-    summary: "Major retailers report stronger-than-expected Q4 earnings, boosting consumer discretionary stocks.",
-    source: "CNBC",
+    title: "Retail stores reporting good sales",
+    summary: "Many stores are doing better than expected, which is a good sign for retail investments.",
+    source: "Retail News",
     timestamp: "1 day ago",
     sentiment: "positive"
   }
@@ -190,32 +199,32 @@ export const aiInsights: AIInsight[] = [
   {
     id: "1",
     type: "opportunity",
-    title: "Potential Entry Point Detected",
-    message: "MSFT has pulled back to a key support level. Based on your moderate risk profile, this could be a good accumulation opportunity. The stock maintains strong fundamentals with a P/E of 35.8.",
+    title: "BUY - Strong upward trend",
+    message: "The current trend looks upward and recent news is very positive. You may want to consider this option.",
     timestamp: "1 hour ago",
     stocks: ["MSFT"]
   },
   {
     id: "2",
     type: "warning",
-    title: "High Volatility Alert",
-    message: "TSLA is showing increased volatility (4.8% daily move). Given your preference for stability, consider reducing position size or setting tighter stop losses.",
+    title: "HOLD - Market uncertain",
+    message: "The overall market direction is a bit unclear right now. It might be better to wait for a clearer signal.",
     timestamp: "3 hours ago",
     stocks: ["TSLA"]
   },
   {
     id: "3",
     type: "tip",
-    title: "Portfolio Rebalancing Suggestion",
-    message: "Your tech allocation is at 75%. Consider diversifying into defensive sectors like healthcare or utilities to balance risk.",
+    title: "Tech Sector Momentum",
+    message: "IT sector showing strong momentum this week due to positive earnings outlook.",
     timestamp: "1 day ago",
     stocks: []
   },
   {
     id: "4",
     type: "alert",
-    title: "Earnings Report Tomorrow",
-    message: "NVDA reports earnings tomorrow after market close. Historical volatility suggests a potential 5-7% move. Review your position sizing.",
+    title: "Market Volatility",
+    message: "Market volatility is high today. It might be best to avoid sudden decisions right now.",
     timestamp: "1 day ago",
     stocks: ["NVDA"]
   }

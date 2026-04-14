@@ -4,26 +4,22 @@ import { Card } from "../ui/card";
 import { Label } from "../ui/label";
 import { Button } from "../ui/button";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Input } from "../ui/input";
 import { TrendingUp, ArrowRight } from "lucide-react";
 
 interface OnboardingData {
-  experience: string;
-  riskTolerance: string;
-  investmentGoal: string;
-  monthlyInvestment: string;
-  timeHorizon: string;
+  investedAmount: string;
+  currentValue: string;
+  riskLevel: string;
 }
 
 export function Onboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<OnboardingData>({
-    experience: "",
-    riskTolerance: "",
-    investmentGoal: "",
-    monthlyInvestment: "",
-    timeHorizon: ""
+    investedAmount: "",
+    currentValue: "",
+    riskLevel: ""
   });
 
   // Check if user is authenticated
@@ -36,38 +32,34 @@ export function Onboarding() {
 
   const questions = [
     {
-      id: "experience",
-      title: "What's your investment experience level?",
-      options: [
-        { value: "beginner", label: "Beginner", description: "New to investing" },
-        { value: "intermediate", label: "Intermediate", description: "1-3 years experience" },
-        { value: "advanced", label: "Advanced", description: "3-5 years experience" },
-        { value: "expert", label: "Expert", description: "5+ years experience" }
-      ]
+      id: "investedAmount",
+      type: "input",
+      title: "What is your total investment?",
+      description: "Enter the total amount of money you have put in. We use this to track how much you started with.",
+      placeholder: "e.g., 10000"
     },
     {
-      id: "riskTolerance",
-      title: "What's your risk tolerance?",
-      options: [
-        { value: "conservative", label: "Conservative", description: "Prefer stable, low-risk investments" },
-        { value: "moderate", label: "Moderate", description: "Balance between risk and stability" },
-        { value: "aggressive", label: "Aggressive", description: "Comfortable with high-risk for higher returns" }
-      ]
+      id: "currentValue",
+      type: "input",
+      title: "What is it worth today?",
+      description: "Enter what your investments are worth right now. This helps us calculate your overall progress.",
+      placeholder: "e.g., 12500"
     },
     {
-      id: "investmentGoal",
-      title: "What's your primary investment goal?",
+      id: "riskLevel",
+      type: "radio",
+      title: "How much risk are you comfortable with?",
+      description: "We use this to personalize the insights we show you. Choose Low, Medium, or High based on your comfort level.",
       options: [
-        { value: "income", label: "Income Generation", description: "Regular dividends and returns" },
-        { value: "growth", label: "Capital Growth", description: "Long-term wealth building" },
-        { value: "balanced", label: "Balanced", description: "Mix of income and growth" },
-        { value: "preservation", label: "Capital Preservation", description: "Protect existing wealth" }
+        { value: "low", label: "Low", description: "Prefer stable, safe investments" },
+        { value: "medium", label: "Medium", description: "Balance between risk and stability" },
+        { value: "high", label: "High", description: "Comfortable with high-risk for higher returns" }
       ]
     }
   ];
 
   const handleNext = () => {
-    if (step < questions.length) {
+    if (step < questions.length - 1) { // since array is 0-indexed, if on index 2 (length 3), it goes to complete
       setStep(step + 1);
     } else {
       handleComplete();
@@ -85,24 +77,31 @@ export function Onboarding() {
     const profile = {
       ...formData,
       createdAt: new Date().toISOString(),
-      tradingStyle: formData.riskTolerance === 'aggressive' ? 'day' : 
-                    formData.riskTolerance === 'moderate' ? 'swing' : 'longterm'
+      tradingStyle: formData.riskLevel === 'high' ? 'day' : 
+                    formData.riskLevel === 'medium' ? 'swing' : 'longterm'
     };
 
     // Save profile
     localStorage.setItem('investorProfile', JSON.stringify(profile));
     
     // Update user status
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    user.isNewUser = false;
-    localStorage.setItem('user', JSON.stringify(user));
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      user.isNewUser = false;
+      localStorage.setItem('user', JSON.stringify(user));
+    }
 
     // Redirect to dashboard
     navigate('/dashboard');
   };
 
-  const currentQuestion = questions[step];
-  const isLastStep = step === questions.length;
+  const isCurrentInputValid = () => {
+    const currentQ = questions[step];
+    if (!currentQ) return false;
+    const value = formData[currentQ.id as keyof OnboardingData];
+    return value.trim() !== "";
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -122,152 +121,86 @@ export function Onboarding() {
             <div className="mb-6">
               <h2 className="text-2xl font-bold mb-2">Welcome! Let's personalize your experience</h2>
               <p className="text-muted-foreground max-w-lg mx-auto">
-                To provide smarter insights and personalized recommendations, please answer a few quick questions about your investment preferences. This will take less than one minute.
+                To provide smarter insights and personalized recommendations, please answer a few quick questions about your investment.
               </p>
             </div>
           )}
         </div>
 
         {/* Progress Bar */}
-        {step > 0 && (
-          <div className="mb-8">
-            <div className="flex justify-between text-sm text-muted-foreground mb-2">
-              <span>Question {step} of {questions.length + 1}</span>
-              <span>{Math.round((step / (questions.length + 1)) * 100)}%</span>
-            </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-primary transition-all duration-300"
-                style={{ width: `${(step / (questions.length + 1)) * 100}%` }}
-              />
-            </div>
+        <div className="mb-8">
+          <div className="flex justify-between text-sm text-muted-foreground mb-2">
+            <span>Question {step + 1} of {questions.length}</span>
+            <span>{Math.round(((step + 1) / questions.length) * 100)}%</span>
           </div>
-        )}
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-primary transition-all duration-300"
+              style={{ width: `${((step + 1) / questions.length) * 100}%` }}
+            />
+          </div>
+        </div>
 
         <Card className="p-8 bg-card border-border">
-          {step === 0 ? (
-            // Welcome Screen
-            <div className="text-center py-8">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <TrendingUp className="w-10 h-10 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold mb-4">Ready to get started?</h3>
-              <p className="text-muted-foreground mb-8">
-                We'll ask you {questions.length + 1} quick questions to understand your investment profile
-              </p>
-              <Button onClick={handleNext} size="lg" className="gap-2">
-                Let's Begin
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
-          ) : !isLastStep ? (
-            // Question Steps
+          {/* Question Steps */}
+          {questions[step] && (
             <div className="space-y-6">
-              <h3 className="text-xl font-bold">{currentQuestion.title}</h3>
+              <h3 className="text-xl font-bold">{questions[step].title}</h3>
+              <p className="text-muted-foreground">{questions[step].description}</p>
               
-              <RadioGroup
-                value={formData[currentQuestion.id as keyof OnboardingData]}
-                onValueChange={(value) => setFormData({ ...formData, [currentQuestion.id]: value })}
-              >
-                <div className="space-y-3">
-                  {currentQuestion.options.map((option) => (
-                    <div
-                      key={option.value}
-                      className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-colors cursor-pointer ${
-                        formData[currentQuestion.id as keyof OnboardingData] === option.value
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                      onClick={() => setFormData({ ...formData, [currentQuestion.id]: option.value })}
-                    >
-                      <RadioGroupItem value={option.value} id={option.value} className="mt-1" />
-                      <Label htmlFor={option.value} className="flex-1 cursor-pointer">
-                        <p className="font-semibold text-foreground">{option.label}</p>
-                        <p className="text-sm text-muted-foreground">{option.description}</p>
-                      </Label>
-                    </div>
-                  ))}
+              {questions[step].type === "radio" ? (
+                <RadioGroup
+                  value={formData[questions[step].id as keyof OnboardingData]}
+                  onValueChange={(value) => setFormData({ ...formData, [questions[step].id]: value })}
+                >
+                  <div className="space-y-3 mt-4">
+                    {questions[step].options?.map((option) => (
+                      <div
+                        key={option.value}
+                        className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-colors cursor-pointer ${
+                          formData[questions[step].id as keyof OnboardingData] === option.value
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                        onClick={() => setFormData({ ...formData, [questions[step].id]: option.value })}
+                      >
+                        <RadioGroupItem value={option.value} id={option.value} className="mt-1" />
+                        <Label htmlFor={option.value} className="flex-1 cursor-pointer">
+                          <p className="font-semibold text-foreground">{option.label}</p>
+                          <p className="text-sm text-muted-foreground">{option.description}</p>
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </RadioGroup>
+              ) : (
+                <div className="mt-4">
+                  <Input 
+                    type="number"
+                    placeholder={questions[step].placeholder}
+                    value={formData[questions[step].id as keyof OnboardingData]}
+                    onChange={(e) => setFormData({...formData, [questions[step].id]: e.target.value})}
+                    className="text-lg py-6"
+                  />
                 </div>
-              </RadioGroup>
+              )}
 
               <div className="flex gap-3 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={handleBack}
-                  className="flex-1"
-                >
-                  Back
-                </Button>
+                {step > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={handleBack}
+                    className="flex-1"
+                  >
+                    Back
+                  </Button>
+                )}
                 <Button
                   onClick={handleNext}
-                  disabled={!formData[currentQuestion.id as keyof OnboardingData]}
+                  disabled={!isCurrentInputValid()}
                   className="flex-1 gap-2"
                 >
-                  Next
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ) : (
-            // Final Step - Additional Info
-            <div className="space-y-6">
-              <h3 className="text-xl font-bold">Almost done! Just two more questions</h3>
-              
-              <div>
-                <Label htmlFor="monthlyInvestment" className="mb-2 block">
-                  What's your expected monthly investment range?
-                </Label>
-                <Select
-                  value={formData.monthlyInvestment}
-                  onValueChange={(value) => setFormData({ ...formData, monthlyInvestment: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select range" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0-500">$0 - $500</SelectItem>
-                    <SelectItem value="500-1000">$500 - $1,000</SelectItem>
-                    <SelectItem value="1000-2500">$1,000 - $2,500</SelectItem>
-                    <SelectItem value="2500-5000">$2,500 - $5,000</SelectItem>
-                    <SelectItem value="5000+">$5,000+</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="timeHorizon" className="mb-2 block">
-                  What's your investment time horizon?
-                </Label>
-                <Select
-                  value={formData.timeHorizon}
-                  onValueChange={(value) => setFormData({ ...formData, timeHorizon: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select time horizon" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="short">Short-term (0-2 years)</SelectItem>
-                    <SelectItem value="medium">Medium-term (2-5 years)</SelectItem>
-                    <SelectItem value="long">Long-term (5-10 years)</SelectItem>
-                    <SelectItem value="verylong">Very Long-term (10+ years)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={handleBack}
-                  className="flex-1"
-                >
-                  Back
-                </Button>
-                <Button
-                  onClick={handleComplete}
-                  disabled={!formData.monthlyInvestment || !formData.timeHorizon}
-                  className="flex-1 gap-2"
-                >
-                  Complete Setup
+                  {step === questions.length - 1 ? "Complete Setup" : "Next"}
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </div>
@@ -276,16 +209,14 @@ export function Onboarding() {
         </Card>
 
         {/* Skip Option */}
-        {step > 0 && (
-          <div className="text-center mt-4">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Skip for now
-            </button>
-          </div>
-        )}
+        <div className="text-center mt-4">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Skip for now
+          </button>
+        </div>
       </div>
     </div>
   );

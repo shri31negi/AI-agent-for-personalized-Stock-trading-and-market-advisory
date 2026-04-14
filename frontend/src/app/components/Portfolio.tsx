@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { motion } from "motion/react";
 import { Card } from "./ui/card";
-import { TrendingUp, TrendingDown, DollarSign, Wallet, Activity, AlertCircle, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Wallet, Activity, AlertCircle, Loader2, Lightbulb } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, CartesianGrid, Tooltip, AreaChart, Area, XAxis, YAxis, BarChart, Bar } from "recharts";
 import { portfolioHoldings, userProfile, portfolioPerformanceData, monthlyInvestmentData } from "../data/mockData";
 import { Badge } from "./ui/badge";
+import { formatCurrency, getCurrencySymbol } from "../utils/formatters";
 
 export function Portfolio() {
   const [timeFilter, setTimeFilter] = useState<'1W' | '1M' | '1Y'>('1M');
@@ -47,22 +49,14 @@ export function Portfolio() {
     fetchLivePrices();
   }, []);
 
-  // New Metrics Calculations
-  // 1. Total Portfolio Value (Holdings Value + Cash)
+  // Metrics Calculations
   const totalHoldingsValue = liveHoldings.reduce((sum, holding) => sum + holding.totalValue, 0);
   const totalPortfolioValue = totalHoldingsValue + userProfile.cashBalance;
-
-  // 2. Total Invested Amount (From mock profile + mock calculation)
   const totalInvestedAmount = userProfile.totalInvested;
-
-  // 3. Total Profit/Loss
   const totalProfitLoss = totalPortfolioValue - totalInvestedAmount;
-
-  // 4. Return Percentage
   const returnPercentage = ((totalProfitLoss / totalInvestedAmount) * 100).toFixed(2);
 
   const chartData = portfolioPerformanceData[timeFilter];
-
   const PIE_COLORS = ['#7c3aed', '#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#6366f1'];
 
   const liveAssetAllocation = [
@@ -80,206 +74,241 @@ export function Portfolio() {
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <span className="ml-3 text-lg text-muted-foreground">Loading portfolio data...</span>
+      <div className="h-screen flex flex-col items-center justify-center bg-background/50 backdrop-blur-lg">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        >
+          <Loader2 className="w-12 h-12 text-primary" />
+        </motion.div>
+        <span className="mt-4 text-xl font-black bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">Analyzing Portfolio...</span>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col p-8 overflow-y-auto bg-background">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-foreground">Portfolio</h2>
-        <p className="text-muted-foreground mt-1 text-sm">Track your investment performance and distribution</p>
+    <div className="relative min-h-screen h-full flex flex-col p-4 md:p-8 overflow-y-auto bg-transparent space-y-8 w-full z-0">
+      {/* Immersive Green Matrix Background */}
+      <div className="fixed inset-0 -z-10 bg-[#020617] dark:bg-black overflow-hidden pointer-events-none">
+        <img 
+          src="/green-matrix-bg.png" 
+          alt="Green Matrix Flow Background" 
+          className="w-full h-full object-cover opacity-60 mix-blend-screen dark:mix-blend-lighten pointer-events-none" 
+        />
+        <div className="absolute inset-0 bg-background/70 dark:bg-background/60 backdrop-blur-[4px] pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-background to-transparent pointer-events-none" />
       </div>
 
-      {/* Top Metrics Row - Simple Minimalist Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="p-6 bg-card border border-border/60 shadow-sm rounded-xl">
-          <p className="text-sm font-medium text-muted-foreground mb-1">Total Portfolio Value</p>
-          <p className="text-3xl font-bold text-foreground mb-1">
-            ${totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-          </p>
-        </Card>
-
-        <Card className="p-6 bg-card border border-border/60 shadow-sm rounded-xl">
-          <p className="text-sm font-medium text-muted-foreground mb-1">Total Invested Amount</p>
-          <p className="text-3xl font-bold text-foreground mb-1">
-            ${totalInvestedAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-          </p>
-        </Card>
-
-        <Card className="p-6 bg-card border border-border/60 shadow-sm rounded-xl">
-          <p className="text-sm font-medium text-muted-foreground mb-1">Total Profit/Loss</p>
-          <div className="flex items-center gap-2">
-            <p className={`text-3xl font-bold ${totalProfitLoss >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {totalProfitLoss >= 0 ? '+' : ''}${Math.abs(totalProfitLoss).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </p>
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${totalProfitLoss >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-              {totalProfitLoss >= 0 ? (
-                <TrendingUp className="w-3.5 h-3.5 text-green-500" />
-              ) : (
-                <TrendingDown className="w-3.5 h-3.5 text-red-500" />
-              )}
+      <div className="relative z-10 w-full max-w-[1400px] mx-auto space-y-8">
+      {/* Top Metrics Row - Premium Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <Card className="p-6 premium-card group">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground/70">Total Value</p>
+              <div className="p-2 bg-primary/10 rounded-xl text-primary group-hover:scale-110 transition-transform">
+                <DollarSign className="w-5 h-5" />
+              </div>
             </div>
-          </div>
-        </Card>
+            <p className="text-3xl font-black text-foreground tabular-nums">
+              {formatCurrency(totalPortfolioValue)}
+            </p>
+          </Card>
+        </motion.div>
 
-        <Card className="p-6 bg-card border border-border/60 shadow-sm rounded-xl">
-          <p className="text-sm font-medium text-muted-foreground mb-1">Return Percentage</p>
-          <p className={`text-3xl font-bold ${parseFloat(returnPercentage) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {parseFloat(returnPercentage) >= 0 ? '+' : ''}{returnPercentage}%
-          </p>
-        </Card>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <Card className="p-6 premium-card group">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground/70">Invested Amount</p>
+              <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400 group-hover:scale-110 transition-transform">
+                <Wallet className="w-5 h-5" />
+              </div>
+            </div>
+            <p className="text-3xl font-black text-foreground tabular-nums">
+              {formatCurrency(totalInvestedAmount)}
+            </p>
+          </Card>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <Card className="p-6 premium-card group">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground/70">Profit / Loss</p>
+              <div className={`p-2 rounded-xl group-hover:scale-110 transition-transform ${totalProfitLoss >= 0 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                {totalProfitLoss >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+              </div>
+            </div>
+            <p className={`text-3xl font-black tabular-nums ${totalProfitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {totalProfitLoss >= 0 ? '+' : ''}{formatCurrency(totalProfitLoss)}
+            </p>
+          </Card>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+          <Card className="p-6 premium-card group">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground/70">Total Return</p>
+              <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 group-hover:scale-110 transition-transform">
+                <Activity className="w-5 h-5" />
+              </div>
+            </div>
+            <p className={`text-3xl font-black tabular-nums ${parseFloat(returnPercentage) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {parseFloat(returnPercentage) >= 0 ? '+' : ''}{returnPercentage}%
+            </p>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Allocation Pie Chart */}
-        <Card className="p-6 bg-card border border-border/60 shadow-sm rounded-xl flex flex-col min-h-[380px]">
-          <h3 className="text-base font-semibold text-foreground mb-2 flex-shrink-0">Portfolio Allocation</h3>
-          <div className="flex-1 min-h-[200px] relative -mt-5">
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={liveAssetAllocation}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={65}
-                  outerRadius={90}
-                  paddingAngle={2}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {liveAssetAllocation.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: number, name: string) => [
-                    `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-                    name
-                  ]}
-                  contentStyle={{ backgroundColor: 'var(--card)', color: 'var(--card-foreground)', border: '1px solid var(--border)', borderRadius: '8px', zIndex: 50, fontSize: '13px' }}
-                  itemStyle={{ color: 'var(--card-foreground)' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+        <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 }}>
+          <Card className="p-8 premium-card flex flex-col h-full min-h-[420px]">
+            <h3 className="text-xl font-black text-foreground mb-6 flex items-center gap-2">
+              <Activity className="w-6 h-6 text-primary" />
+              Asset Allocation
+            </h3>
+            <div className="flex-1 relative">
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie
+                    data={liveAssetAllocation}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={70}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {liveAssetAllocation.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} className="hover:opacity-80 transition-opacity cursor-pointer" />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                    formatter={(value: number, name: string) => [
+                      formatCurrency(value, (liveHoldings.find(h => h.symbol === name) as any)?.currency || 'INR'),
+                      name
+                    ]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
 
-          {/* Legend */}
-          <div className="grid grid-cols-2 gap-x-2 gap-y-3 mt-1 pt-4 border-t border-border/50 shrink-0">
-            {liveAssetAllocation.map((entry, index) => (
-              <div key={entry.name} className="flex items-center text-xs">
-                <div
-                  className="w-2.5 h-2.5 rounded-sm mr-2 shrink-0"
-                  style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
-                />
-                <span className="truncate flex-1 font-medium text-muted-foreground">{entry.name}</span>
-                <span className="font-bold text-foreground ml-1">{entry.percentage}%</span>
-              </div>
-            ))}
-          </div>
-        </Card>
+            {/* Legend - Modern Grid */}
+            <div className="grid grid-cols-2 gap-3 mt-6 pt-6 border-t border-white/5">
+              {liveAssetAllocation.slice(0, 4).map((entry, index) => (
+                <div key={entry.name} className="flex items-center group cursor-default">
+                  <div className="w-2 h-2 rounded-full mr-2 group-hover:scale-150 transition-transform" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }} />
+                  <span className="text-xs font-black uppercase tracking-widest text-muted-foreground mr-auto">{entry.name}</span>
+                  <span className="text-xs font-black text-foreground">{entry.percentage}%</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </motion.div>
 
         {/* Monthly Investment Tracker */}
-        <Card className="p-6 bg-card border border-border/60 shadow-sm rounded-xl lg:col-span-2 flex flex-col min-h-[380px]">
-          <div className="flex justify-between items-center mb-6 flex-shrink-0">
-            <h3 className="text-base font-semibold text-foreground">Monthly Investment Tracker</h3>
-          </div>
-          <div className="flex-1 w-full min-h-[250px]">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={monthlyInvestmentData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.4} />
-                <XAxis
-                  dataKey="month"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
-                  dy={10}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
-                  tickFormatter={(value) => `$${value.toLocaleString()}`}
-                />
-                <Tooltip
-                  cursor={{ fill: 'var(--muted)', opacity: 0.2 }}
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, 'Invested']}
-                  contentStyle={{ backgroundColor: 'var(--card)', color: 'var(--card-foreground)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px' }}
-                  itemStyle={{ color: 'var(--primary)', fontWeight: 'bold' }}
-                />
-                <Bar
-                  dataKey="invested"
-                  fill="#7c3aed"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={50}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
+        <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6 }} className="lg:col-span-2">
+          <Card className="p-8 premium-card flex flex-col h-full min-h-[420px]">
+            <h3 className="text-xl font-black text-foreground mb-8 flex items-center gap-2">
+              <TrendingUp className="w-6 h-6 text-indigo-400" />
+              Monthly Contribution
+            </h3>
+            <div className="flex-1 w-full">
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={monthlyInvestmentData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} tickFormatter={(value) => `${getCurrencySymbol(undefined, 'AAPL')}${value.toLocaleString()}`} />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                    contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                    formatter={(value: number) => [formatCurrency(value, 'USD'), 'Invested']}
+                  />
+                  <Bar dataKey="invested" fill="url(#barGradient)" radius={[6, 6, 0, 0]} maxBarSize={40}>
+                    <defs>
+                      <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#818cf8" />
+                        <stop offset="100%" stopColor="#6366f1" />
+                      </linearGradient>
+                    </defs>
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </motion.div>
       </div>
 
-      {/* AI Insight Card */}
-      <Card className="p-5 mb-8 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-xl shadow-sm">
-        <div className="flex items-start gap-4">
-          <div className="p-2.5 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex-shrink-0">
-            <Activity className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+      {/* AI Insight Card - Premium Refinement */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
+        <Card className="p-8 bg-indigo-500/5 border border-indigo-500/20 rounded-3xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px] -mr-32 -mt-32 rounded-full transition-transform group-hover:scale-150" />
+          <div className="flex items-start gap-6 relative z-10">
+            <div className="p-4 bg-indigo-500/20 rounded-2xl flex-shrink-0 animate-pulse">
+              <Lightbulb className="w-8 h-8 text-indigo-400" />
+            </div>
+            <div>
+              <h4 className="text-xl font-black text-indigo-300 mb-2 flex items-center gap-2">
+                AI Portfolio Strategist
+                <Badge variant="outline" className="text-xs font-black border-indigo-400/30 text-indigo-300 ml-2">PRO ADVISORY</Badge>
+              </h4>
+              <p className="text-muted-foreground font-bold leading-relaxed text-base max-w-5xl">
+                Your portfolio is performing consistently, mostly driven by strong equity gains. However, your <strong className="text-foreground">Cash & Crypto</strong> allocation is relatively high right now. Consider dollar-cost averaging your cash balance into your ETF holdings for steadier long-term compounding.
+              </p>
+            </div>
           </div>
-          <div>
-            <h4 className="font-semibold text-base text-foreground mb-1">AI Portfolio Insight</h4>
-            <p className="text-muted-foreground text-sm max-w-4xl leading-relaxed">
-              Your portfolio is performing consistently, mostly driven by strong equity gains. However, your <strong className="text-foreground">Cash & Crypto</strong> allocation is relatively high right now. Consider dollar-cost averaging your cash balance into your ETF holdings for steadier long-term compounding.
-            </p>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      </motion.div>
 
-      {/* Holdings List */}
-      <Card className="bg-card border border-border/60 shadow-sm rounded-xl overflow-hidden flex-1 flex flex-col">
-        <div className="p-5 border-b border-border/50">
-          <h3 className="text-base font-semibold text-foreground">Holdings</h3>
-        </div>
-        <div className="overflow-x-auto flex-1 p-2">
-          <table className="w-full text-sm">
-            <thead>
-              <tr>
-                <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Stock Name</th>
-                <th className="text-right py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Quantity</th>
-                <th className="text-right py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Average Buy Price</th>
-                <th className="text-right py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Current Price</th>
-                <th className="text-right py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Profit/Loss</th>
-              </tr>
-            </thead>
-            <tbody>
-              {liveHoldings.map((holding) => (
-                <tr key={holding.symbol} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
-                  <td className="py-4 px-4">
-                    <div className="font-semibold text-foreground">{holding.symbol}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{holding.name}</div>
-                  </td>
-                  <td className="py-4 px-4 text-right font-medium text-foreground">{holding.shares}</td>
-                  <td className="py-4 px-4 text-right font-medium text-foreground">
-                    ${holding.avgCost.toFixed(2)}
-                  </td>
-                  <td className="py-4 px-4 text-right font-medium text-foreground">
-                    ${holding.currentPrice.toFixed(2)}
-                  </td>
-                  <td className="py-4 px-4 text-right">
-                    <div className={`font-semibold ${holding.gainLoss >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {holding.gainLoss >= 0 ? '+' : ''}${Math.abs(holding.gainLoss).toFixed(2)}
-                    </div>
-                  </td>
+      {/* Holdings List - Premium Table */}
+      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
+        <Card className="premium-card overflow-hidden">
+          <div className="p-8 border-b border-white/5 flex justify-between items-center">
+            <h3 className="text-xl font-black text-foreground">Asset Holdings</h3>
+            <Badge variant="secondary" className="font-black text-xs tracking-widest">{liveHoldings.length} ASSETS</Badge>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-white/5">
+                  <th className="text-left p-6 font-black text-muted-foreground text-[11px] uppercase tracking-widest">Asset Name</th>
+                  <th className="text-right p-6 font-black text-muted-foreground text-[11px] uppercase tracking-widest">Shares</th>
+                  <th className="text-right p-6 font-black text-muted-foreground text-[11px] uppercase tracking-widest">Avg Cost</th>
+                  <th className="text-right p-6 font-black text-muted-foreground text-[11px] uppercase tracking-widest">Market Price</th>
+                  <th className="text-right p-6 font-black text-muted-foreground text-[11px] uppercase tracking-widest">Total Value</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {liveHoldings.map((holding) => (
+                  <tr key={holding.symbol} className="group hover:bg-white/5 transition-all">
+                    <td className="p-6">
+                      <div className="font-black text-foreground tracking-tight group-hover:text-primary transition-colors">{holding.symbol}</div>
+                      <div className="text-xs font-bold text-muted-foreground uppercase mt-1">{holding.name}</div>
+                    </td>
+                    <td className="p-6 text-right font-black tabular-nums">{holding.shares}</td>
+                    <td className="p-6 text-right font-black tabular-nums text-muted-foreground">
+                      {formatCurrency(holding.avgCost, (holding as any).currency, holding.symbol)}
+                    </td>
+                    <td className="p-6 text-right font-black tabular-nums">
+                      {formatCurrency(holding.currentPrice, (holding as any).currency, holding.symbol)}
+                    </td>
+                    <td className="p-6 text-right">
+                      <div className="font-black tabular-nums text-foreground">{formatCurrency(holding.totalValue, (holding as any).currency, holding.symbol)}</div>
+                      <div className={`text-xs font-black mt-1 ${holding.gainLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {holding.gainLoss >= 0 ? '▲' : '▼'} {Math.abs(holding.gainLossPercent).toFixed(2)}%
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </motion.div>
+      </div>
     </div>
   );
 }

@@ -54,49 +54,49 @@ export function AIAdvisor() {
     'reliance|ril': {
       id: '',
       role: 'assistant',
-      content: "Reliance Industries (RIL) is trading near strong support levels. Considering their ongoing expansion in retail and telecom, it continues to show fundamental strength. Here is my structured analysis:",
+      content: "Reliance Industries (RIL) is showing a strong upward trend right now. Considering their recent positive news, you may want to consider this option.",
       timestamp: new Date(),
       stocks: ['RIL'],
       structuredData: {
         recommendation: 'Buy',
         confidenceScore: 82,
         keyReasons: [
-          "Retail segment EBITDA margin expansion by 120bps",
-          "Telecom ARPU (Average Revenue Per User) growth",
-          "Trading at favorable valuation compared to historical P/E"
+          "Retail segment is showing steady growth",
+          "Telecom services are expanding",
+          "Trading at a favorable overall value"
         ],
         riskLevel: 'Low',
-        suggestedAllocation: '3-5% of portfolio',
+        suggestedAllocation: 'Small portion of portfolio',
         sentiment: 'bullish'
       }
     },
     'down today|portfolio down': {
       id: '',
       role: 'assistant',
-      content: "Your portfolio is down 1.2% today primarily due to pressure on the Technology sector. CPI data released this morning showed higher-than-expected inflation, triggering a broad market sell-off in growth stocks.\n\nHowever, your Financial holdings (like HDFC) are up 0.5%, acting as a hedge. I don't recommend panic selling. If anything, this presents a buying opportunity for quality tech names over a 6-month horizon.",
+      content: "Your portfolio is down slightly today. The overall market is moving up and down very quickly. You may want to hold off on making any sudden decisions until things calm down.",
       timestamp: new Date(),
     },
     'sectors|performing well': {
       id: '',
       role: 'assistant',
-      content: "This week, Defensive and Value sectors are outperforming due to macroeconomic uncertainty. Specifically:\n\n1. **Consumer Staples (+2.4%)** - Investors shifting to cash-generating businesses.\n2. **Energy (+1.8%)** - Crude oil prices stabilizing around $82/bbl.\n3. **Healthcare (+1.1%)** - Solid earnings beats from pharma majors.\n\nGiven your portfolio is overweight on Tech, you might consider rotating some profits into Healthcare for better risk-adjusted returns.",
+      content: "Technology companies are expected to do well this week because of positive business reports. Energy prices are also shifting. The overall market is staying very calm as people wait for upcoming economic updates.",
       timestamp: new Date(),
     },
     'risky|risk': {
       id: '',
       role: 'assistant',
-      content: "Looking at your connected portfolio, your overall risk beta is 1.35 (which is 35% more volatile than the broader market). \n\nThe main source of risk is your high concentration in Mid-Cap IT and Green Energy stocks. While they offer high growth, they are vulnerable to interest rate hikes.",
+      content: "Looking at your connected portfolio, market volatility is quite high today. Since you are comfortable with more risk, you might consider securing some of your gains or exploring new opportunities.",
       timestamp: new Date(),
       structuredData: {
         recommendation: 'Hold',
         confidenceScore: 78,
         keyReasons: [
-          "Beta is above desired 1.1 threshold",
-          "Overweight in high-beta sectors",
-          "Not enough defensive allocation (e.g., FMCG, Pharma)"
+          "Market activity is unusually high right now",
+          "Your current investments see frequent ups and downs",
+          "Wait for a clearer overall signal"
         ],
         riskLevel: 'High',
-        suggestedAllocation: 'Rebalance to increase large-cap exposure'
+        suggestedAllocation: 'Consider reviewing your position'
       }
     }
   };
@@ -207,13 +207,29 @@ export function AIAdvisor() {
   };
 
   return (
-    <div className="h-full flex flex-col p-8">
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold text-purple-400">AI Trading Advisor</h2>
-        <p className="text-muted-foreground mt-1">Your intelligent copilot for portfolio analysis and market insights</p>
+    <div className="relative min-h-screen h-full flex flex-col p-8 pt-0 w-full z-0">
+      <style>{`
+        @keyframes slideMoneyDown {
+          0% { transform: translateY(-50%); }
+          100% { transform: translateY(0); }
+        }
+        .animate-money-fall {
+          animation: slideMoneyDown 40s linear infinite;
+        }
+      `}</style>
+      <div className="fixed inset-0 -z-10 bg-[#020617] dark:bg-black overflow-hidden pointer-events-none">
+         <div 
+           className="absolute top-0 left-0 w-full h-[200%] opacity-30 dark:opacity-40 mix-blend-screen animate-money-fall"
+           style={{
+             backgroundImage: "url('/falling-money-bg.png')",
+             backgroundSize: '100% 50%',
+             backgroundRepeat: 'repeat-y'
+           }}
+         />
+         <div className="absolute inset-0 bg-background/80 dark:bg-background/80 backdrop-blur-[3px]" />
       </div>
 
-      <div className="flex-1 flex gap-6 min-h-0">
+      <div className="flex-1 flex gap-6 min-h-0 relative z-10 w-full max-w-[1200px] mx-auto mt-6">
         {/* Chat Area */}
         <Card className="flex-1 flex flex-col bg-card border-border shadow-md">
           {/* Quick Actions Bar */}
