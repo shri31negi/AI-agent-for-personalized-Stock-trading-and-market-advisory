@@ -18,18 +18,7 @@ export function MarketAnalysis() {
   const [loading, setLoading] = useState(true);
   const [chartLoading, setChartLoading] = useState(true);
 
-  const tickerRows = useMemo(() => {
-    return [...Array(6)].map((_, rowIndex) => {
-      return [...Array(20)].map((_, itemIndex) => {
-        const isUp = Math.random() > 0.5;
-        const price = (Math.random() * 500 + 10).toFixed(2);
-        const change = (Math.random() * 5).toFixed(2);
-        const symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'JPM', 'V', 'WMT'];
-        const symbol = symbols[Math.floor(Math.random() * symbols.length)];
-        return { id: `${rowIndex}-${itemIndex}`, symbol, price, isUp, change };
-      });
-    });
-  }, []);
+  const tickerRows = useMemo(() => [], []); // Removed mock random background prices
 
   useEffect(() => {
     const fetchTrending = async () => {
@@ -132,23 +121,6 @@ export function MarketAnalysis() {
     )
     : trendingStocksState;
 
-  if (loading) {
-    return (
-      <div className="p-8 flex items-center justify-center h-[600px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <span className="ml-3 text-lg text-muted-foreground">Loading market data...</span>
-      </div>
-    );
-  }
-
-  if (!selectedStock) {
-    return (
-      <div className="p-8 flex items-center justify-center h-[600px]">
-        <span className="text-lg text-muted-foreground">No stock data available</span>
-      </div>
-    );
-  }
-
   const [technicalIndicators, setTechnicalIndicators] = useState<any>({
     rsi: 58.3,
     ma50: 0,
@@ -179,6 +151,23 @@ export function MarketAnalysis() {
     fetchTechnicals();
   }, [selectedStock?.symbol]);
 
+  if (loading) {
+    return (
+      <div className="p-8 flex items-center justify-center h-[600px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="ml-3 text-lg text-muted-foreground">Loading market data...</span>
+      </div>
+    );
+  }
+
+  if (!selectedStock) {
+    return (
+      <div className="p-8 flex items-center justify-center h-[600px]">
+        <span className="text-lg text-muted-foreground">No stock data available</span>
+      </div>
+    );
+  }
+
   const analystRatings = {
     buy: 18,
     hold: 7,
@@ -206,32 +195,13 @@ export function MarketAnalysis() {
         }
       `}</style>
 
-      {/* Immersive Market Analysis Background with Moving Numbers */}
+      {/* Immersive Market Analysis Background */}
       <div className="fixed inset-0 -z-10 bg-[#020617] overflow-hidden">
         <img
           src="/stock-ticker-bg.png"
           alt="Market Analysis Background"
           className="w-full h-full object-cover opacity-40 dark:opacity-50 pointer-events-none mix-blend-screen"
         />
-        {/* Ticker overlay mimicking moving numbers board */}
-        <div className="absolute inset-0 z-0 flex flex-col justify-around opacity-40 dark:opacity-50 pointer-events-none overflow-hidden mix-blend-screen">
-          {tickerRows.map((row, rowIndex) => (
-            <div
-              key={rowIndex}
-              className={`flex whitespace-nowrap w-[200%] font-mono text-xl md:text-2xl font-black ${rowIndex % 2 === 0 ? 'animate-ticker-left text-orange-500/60' : 'animate-ticker-right text-indigo-400/60'}`}
-            >
-              {row.map((item) => (
-                <div key={item.id} className="mx-8 md:mx-12 flex items-center gap-3">
-                  <span className="tracking-wider">{item.symbol}</span>
-                  <span>{item.price}</span>
-                  <span className={item.isUp ? 'text-green-500 font-bold' : 'text-red-500 font-bold'}>
-                    {item.isUp ? '▲' : '▼'} {item.change}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
         {/* Dimming overlay so foreground content is readable */}
         <div className="absolute inset-0 bg-background/80 dark:bg-background/70 backdrop-blur-[3px] pointer-events-none" />
       </div>

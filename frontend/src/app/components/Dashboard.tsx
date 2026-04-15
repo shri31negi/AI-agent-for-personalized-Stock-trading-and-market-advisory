@@ -3,14 +3,16 @@ import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import { TrendingUp, TrendingDown, DollarSign, AlertCircle, Lightbulb, AlertTriangle, Lock } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, AlertCircle, Lightbulb, AlertTriangle, Lock, Loader2 } from "lucide-react";
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { trendingStocks, marketNews, aiInsights, userProfile, generatePriceHistory } from "../data/mockData";
+import { trendingStocks, marketNews, aiInsights as mockAiInsights, userProfile, generatePriceHistory } from "../data/mockData";
 import { Badge } from "./ui/badge";
 import { formatCurrency, getCurrencySymbol } from "../utils/formatters";
 
 export function Dashboard() {
   const [liveNews, setLiveNews] = useState(marketNews);
+  const [liveInsights, setLiveInsights] = useState(mockAiInsights);
+  const [insightsLoading, setInsightsLoading] = useState(true);
   const [profile, setProfile] = useState(userProfile);
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export function Dashboard() {
 
     const fetchNews = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/market/news');
+        const res = await fetch('http://localhost:5000/api/news');
         if (res.ok) {
           const data = await res.json();
           if (data.length > 0) setLiveNews(data);
@@ -42,6 +44,24 @@ export function Dashboard() {
       }
     };
     fetchNews();
+
+    const fetchInsights = async () => {
+      setInsightsLoading(true);
+      try {
+        const res = await fetch('http://localhost:5000/api/insights');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.insights?.length > 0) {
+            setLiveInsights(data.insights);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching AI insights:", error);
+      } finally {
+        setInsightsLoading(false);
+      }
+    };
+    fetchInsights();
   }, []);
 
   const portfolioHistory = generatePriceHistory(profile.portfolioValue, 30);
@@ -167,7 +187,7 @@ export function Dashboard() {
             </div>
             <div className="space-y-4 flex-1">
               {liveNews.slice(0, 4).map((news: any) => (
-                <div key={news.id} className="group p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 hover:border-indigo-500/30 transition-all hover:bg-black/10 dark:hover:bg-white/10 flex flex-col justify-between">
+                <a href={news.link} target="_blank" rel="noopener noreferrer" key={news.id} className="group p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 hover:border-indigo-500/30 transition-all hover:bg-black/10 dark:hover:bg-white/10 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <Badge variant="secondary" className="text-[10px] font-black uppercase bg-indigo-500/20 text-indigo-700 dark:text-indigo-200">{news.source}</Badge>
@@ -175,7 +195,7 @@ export function Dashboard() {
                     </div>
                     <h4 className="font-black text-sm leading-tight text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">{news.title}</h4>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           </Card>
@@ -192,26 +212,35 @@ export function Dashboard() {
             <h3 className="text-xl font-black text-purple-400 mb-6 flex items-center gap-2">
               <Lightbulb className="w-6 h-6" />
               AI Insights
+              {insightsLoading && <Loader2 className="w-4 h-4 ml-2 animate-spin text-purple-400" />}
+              {!insightsLoading && <Badge variant="outline" className="ml-2 text-[10px] font-black border-purple-500/30 text-purple-400">GEMINI LIVE</Badge>}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-              {aiInsights.map((insight) => (
-                <div key={insight.id} className={`p-5 rounded-xl border-2 transition-all hover:scale-[1.02] flex flex-col justify-between ${getInsightColor(insight.type)}`}>
-                  <div className="flex items-start gap-3">
-                    <div className="mt-1">{getInsightIcon(insight.type)}</div>
-                    <div>
-                      <p className="text-[15px] font-black tracking-tight leading-tight">{insight.title}</p>
-                      <p className="text-sm mt-3 font-semibold leading-relaxed opacity-90">{insight.message}</p>
-                    </div>
-                  </div>
-                  {insight.stocks && insight.stocks.length > 0 && (
-                    <div className="flex gap-2 mt-4 ml-7">
-                      {insight.stocks.map(s => (
-                        <Badge key={s} variant="secondary" className="text-xs font-black uppercase tracking-tighter bg-black/10 dark:bg-white/10 border-none">{s}</Badge>
-                      ))}
-                    </div>
-                  )}
+              {insightsLoading ? (
+                <div className="col-span-2 flex items-center justify-center h-40 gap-3 text-muted-foreground">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span className="font-semibold">Gemini is analyzing live market data...</span>
                 </div>
-              ))}
+              ) : (
+                liveInsights.map((insight: any) => (
+                  <div key={insight.id} className={`p-5 rounded-xl border-2 transition-all hover:scale-[1.02] flex flex-col justify-between ${getInsightColor(insight.type)}`}>
+                    <div className="flex items-start gap-3">
+                      <div className="mt-1">{getInsightIcon(insight.type)}</div>
+                      <div>
+                        <p className="text-[15px] font-black tracking-tight leading-tight">{insight.title}</p>
+                        <p className="text-sm mt-3 font-semibold leading-relaxed opacity-90">{insight.message}</p>
+                      </div>
+                    </div>
+                    {insight.stocks && insight.stocks.length > 0 && (
+                      <div className="flex gap-2 mt-4 ml-7">
+                        {insight.stocks.map((s: string) => (
+                          <Badge key={s} variant="secondary" className="text-xs font-black uppercase tracking-tighter bg-black/10 dark:bg-white/10 border-none">{s}</Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </Card>
         </motion.div>

@@ -3,7 +3,9 @@ const path = require('path');
 
 class AIIntegrationService {
   constructor() {
-    this.pythonPath = 'python';
+    // Use full path to ensure Node.js child_process finds the correct Python
+    // regardless of Windows PATH differences between terminal and spawned processes
+    this.pythonPath = process.env.PYTHON_PATH || 'C:\\Users\\Avni\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
     this.aiModulePath = path.join(__dirname, '../../ai_integration');
   }
 

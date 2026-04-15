@@ -9,6 +9,8 @@ const portfolioRoutes = require('./routes/portfolioRoutes');
 const marketRoutes = require('./routes/marketRoutes');
 const tradeRoutes = require('./routes/tradeRoutes');
 const newsRoutes = require('./routes/newsRoutes');
+const insightsRoutes = require('./routes/insightsRoutes');
+const advisorRoutes = require('./routes/advisorRoutes');
 
 const app = express();
 
@@ -32,6 +34,8 @@ app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/market', marketRoutes);
 app.use('/api/trades', tradeRoutes);
 app.use('/api/news', newsRoutes);
+app.use('/api/insights', insightsRoutes);
+app.use('/api/advisor', advisorRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

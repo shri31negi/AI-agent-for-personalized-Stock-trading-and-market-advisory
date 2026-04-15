@@ -3,6 +3,9 @@ const router = express.Router();
 const portfolioController = require('../controllers/portfolioController');
 const auth = require('../middleware/auth');
 
+// Unauthenticated route for guest portfolio recommendations
+router.post('/recommend', portfolioController.getGuestRecommendations);
+
 // All routes require authentication
 router.use(auth);
 

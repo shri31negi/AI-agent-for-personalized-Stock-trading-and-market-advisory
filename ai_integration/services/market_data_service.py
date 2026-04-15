@@ -3,38 +3,51 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 
-def get_stock_info(symbol):
+def get_stock_info(symbol, fast=False):
     """Fetch real-time stock information"""
     try:
         ticker = yf.Ticker(symbol)
-        info = ticker.info
-
-        # Fetch historical data to calculate volatility and momentum
-        hist = ticker.history(period="1y")
-        returns = hist['Close'].pct_change().dropna()
-        volatility = returns.std() * np.sqrt(252) # Annualized volatility
+        info = ticker.fast_info
         
-        # Calculate momentum (1-year return)
-        momentum = (hist['Close'].iloc[-1] / hist['Close'].iloc[0]) - 1 if len(hist) > 0 else 0
+        # Determine price quickly
+        price = info.last_price if hasattr(info, 'last_price') else 0
+        prev_close = info.previous_close if hasattr(info, 'previous_close') else 0
+        change = price - prev_close if price and prev_close else 0
+        change_percent = (change / prev_close) * 100 if prev_close else 0
+
+        # Fast fetch mode skips full 1Y history to avoid severe API lag for big lists
+        volatility = 0.2
+        momentum = 0
+        
+        if not fast:
+            try:
+                hist = ticker.history(period="1y")
+                if not hist.empty:
+                    returns = hist['Close'].pct_change().dropna()
+                    calc_vol = returns.std() * np.sqrt(252) # Annualized volatility
+                    volatility = float(calc_vol) if not np.isnan(calc_vol) else 0.2
+                    momentum = float((hist['Close'].iloc[-1] / hist['Close'].iloc[0]) - 1)
+            except Exception as e:
+                pass
 
         return {
             "symbol": symbol,
-            "name": info.get("longName", symbol),
-            "price": info.get("currentPrice", info.get("regularMarketPrice")),
-            "change": info.get("regularMarketChange"),
-            "changePercent": info.get("regularMarketChangePercent"),
-            "volume": info.get("regularMarketVolume"),
-            "marketCap": info.get("marketCap"),
-            "pe_ratio": info.get("trailingPE"),
-            "sector": info.get("sector"),
-            "currency": info.get("currency", "USD"),
-            "high": info.get("dayHigh"),
-            "low": info.get("dayLow"),
-            "dividend_yield": info.get("dividendYield", 0),
-            "volatility": float(volatility) if not np.isnan(volatility) else 0.2,
-            "beta": info.get("beta", 1.0),
-            "momentum": float(momentum),
-            "growth_rate": info.get("earningsGrowth", 0)
+            "name": info.get("longName", symbol) if not fast else symbol,
+            "price": price,
+            "change": change,
+            "changePercent": change_percent,
+            "volume": info.get("regularMarketVolume", 0) if not fast else (info.last_volume if hasattr(info, 'last_volume') else 0),
+            "marketCap": info.get("marketCap", 0) if not fast else (info.market_cap if hasattr(info, 'market_cap') else 0),
+            "pe_ratio": info.get("trailingPE", 0) if not fast else 0,
+            "sector": info.get("sector", "Tech") if not fast else "Tech",
+            "currency": info.get("currency", "USD") if not fast else (info.currency if hasattr(info, 'currency') else "USD"),
+            "high": info.get("dayHigh", 0) if not fast else (info.day_high if hasattr(info, 'day_high') else 0),
+            "low": info.get("dayLow", 0) if not fast else (info.day_low if hasattr(info, 'day_low') else 0),
+            "dividend_yield": info.get("dividendYield", 0) if not fast else 0,
+            "volatility": volatility,
+            "beta": info.get("beta", 1.0) if not fast else 1.0,
+            "momentum": momentum,
+            "growth_rate": info.get("earningsGrowth", 0) if not fast else 0
         }
     except Exception as e:
         return {"error": str(e), "symbol": symbol}
@@ -64,15 +77,40 @@ def get_historical_data(symbol, period="1mo", interval="1d"):
         return {"error": str(e), "symbol": symbol}
 
 def get_trending_stocks(region="US"):
-    """Fetch trending stocks (limited to a few well-known ones if API limited)"""
-    # yfinance doesn't have a direct 'trending' list easily, 
-    # we can use a predefined list of popular stocks and update their prices
-    popular_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'RELIANCE.NS', 'TCS.NS', 'INFY.NS']
+    """Fetch trending stocks efficiently by downloading batch live data avoiding IP bans"""
+    popular_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA'] # Top 6
     
     results = []
-    for symbol in popular_symbols:
-        info = get_stock_info(symbol)
-        if "error" not in info:
-            results.append(info)
+    try:
+        data = yf.download(popular_symbols, period="2d", progress=False)
+        closes = data['Close']
+        
+        for symbol in popular_symbols:
+            if symbol in closes:
+                # get last 2 days close if available or just last
+                series_data = closes[symbol].dropna()
+                if len(series_data) >= 2:
+                    current_price = series_data.iloc[-1]
+                    prev_close = series_data.iloc[-2]
+                elif len(series_data) == 1:
+                    current_price = series_data.iloc[-1]
+                    prev_close = current_price
+                else: continue
+                
+                change = float(current_price - prev_close)
+                change_percent = float((change / prev_close) * 100) if prev_close else 0
+                
+                results.append({
+                    "symbol": symbol,
+                    "name": symbol,
+                    "price": float(current_price),
+                    "change": change,
+                    "changePercent": change_percent,
+                    "volume": 0, "marketCap": 0, "pe_ratio": 0, "sector": "Tech", "currency": "USD",
+                    "high": 0, "low": 0, "dividend_yield": 0, "volatility": 0.2, "beta": 1.0, 
+                    "momentum": 0, "growth_rate": 0
+                })
+    except Exception as e:
+        print(f"Error fetching live batch data: {e}")
             
     return results

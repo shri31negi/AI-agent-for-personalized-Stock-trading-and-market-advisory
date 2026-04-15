@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Send, Bot, User, TrendingUp, AlertTriangle, Lightbulb, Activity, Target, ShieldAlert, LineChart } from "lucide-react";
+import { Send, Bot, User, Lightbulb, Activity, Target, ShieldAlert } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 
@@ -22,6 +22,7 @@ interface Message {
   timestamp: Date;
   stocks?: string[];
   structuredData?: StructuredData;
+  isTyping?: boolean;
 }
 
 export function AIAdvisor() {
@@ -29,12 +30,29 @@ export function AIAdvisor() {
     {
       id: '1',
       role: 'assistant',
-      content: "Hello! I'm your AI Trading Advisor. I've synced with your portfolio and noticed you hold **40% Tech** and **20% Financials**. \n\nI can help you analyze your portfolio, evaluate stocks, and answer your investing questions. How can we optimize your strategy today?",
+      content: "Hello! I'm your AI Trading Advisor powered by Gemini. I've synced with your portfolio and live market data.\n\nFeel free to ask me **anything** about stocks, your portfolio, market trends, or investing strategy. I'll give you a personalized, real-time answer based on your profile.",
       timestamp: new Date(Date.now() - 1000 * 60 * 5),
     }
   ]);
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load user profile and portfolio holdings from localStorage (set during onboarding/portfolio)
+  const [userProfile, setUserProfile] = useState<Record<string, unknown> | null>(null);
+  const [holdings, setHoldings] = useState<Record<string, unknown>[]>([]);
+
+  useEffect(() => {
+    try {
+      const profileStr = localStorage.getItem('investorProfile');
+      if (profileStr) setUserProfile(JSON.parse(profileStr));
+
+      const portfolioStr = localStorage.getItem('user_portfolio');
+      if (portfolioStr) setHoldings(JSON.parse(portfolioStr));
+    } catch {
+      // silently ignore parse errors
+    }
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -44,78 +62,8 @@ export function AIAdvisor() {
     scrollToBottom();
   }, [messages]);
 
-  const aiResponses: { [key: string]: Message } = {
-    'default': {
-      id: '',
-      role: 'assistant',
-      content: "I've analyzed that from multiple angles. Based on your current portfolio consisting of heavy Tech exposure, I'd suggest reviewing sector correlation before making a move. Can we narrow down your focus to a specific sector or ticker?",
-      timestamp: new Date(),
-    },
-    'reliance|ril': {
-      id: '',
-      role: 'assistant',
-      content: "Reliance Industries (RIL) is showing a strong upward trend right now. Considering their recent positive news, you may want to consider this option.",
-      timestamp: new Date(),
-      stocks: ['RIL'],
-      structuredData: {
-        recommendation: 'Buy',
-        confidenceScore: 82,
-        keyReasons: [
-          "Retail segment is showing steady growth",
-          "Telecom services are expanding",
-          "Trading at a favorable overall value"
-        ],
-        riskLevel: 'Low',
-        suggestedAllocation: 'Small portion of portfolio',
-        sentiment: 'bullish'
-      }
-    },
-    'down today|portfolio down': {
-      id: '',
-      role: 'assistant',
-      content: "Your portfolio is down slightly today. The overall market is moving up and down very quickly. You may want to hold off on making any sudden decisions until things calm down.",
-      timestamp: new Date(),
-    },
-    'sectors|performing well': {
-      id: '',
-      role: 'assistant',
-      content: "Technology companies are expected to do well this week because of positive business reports. Energy prices are also shifting. The overall market is staying very calm as people wait for upcoming economic updates.",
-      timestamp: new Date(),
-    },
-    'risky|risk': {
-      id: '',
-      role: 'assistant',
-      content: "Looking at your connected portfolio, market volatility is quite high today. Since you are comfortable with more risk, you might consider securing some of your gains or exploring new opportunities.",
-      timestamp: new Date(),
-      structuredData: {
-        recommendation: 'Hold',
-        confidenceScore: 78,
-        keyReasons: [
-          "Market activity is unusually high right now",
-          "Your current investments see frequent ups and downs",
-          "Wait for a clearer overall signal"
-        ],
-        riskLevel: 'High',
-        suggestedAllocation: 'Consider reviewing your position'
-      }
-    }
-  };
-
-  const getAIResponse = (userMessage: string): Message => {
-    const lowerMessage = userMessage.toLowerCase();
-
-    for (const [key, response] of Object.entries(aiResponses)) {
-      const keywords = key.split('|');
-      if (keywords.some(keyword => lowerMessage.includes(keyword))) {
-        return { ...response, id: Date.now().toString() };
-      }
-    }
-
-    return { ...aiResponses.default, id: Date.now().toString() };
-  };
-
-  const handleSend = (text: string = input) => {
-    if (!text.trim()) return;
+  const handleSend = async (text: string = input) => {
+    if (!text.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -126,12 +74,58 @@ export function AIAdvisor() {
 
     setMessages(prev => [...prev, userMessage]);
     if (text === input) setInput("");
+    setIsLoading(true);
 
-    // Simulate AI response delay
-    setTimeout(() => {
-      const aiMessage = getAIResponse(text);
-      setMessages(prev => [...prev, aiMessage]);
-    }, 1200);
+    // Add typing indicator bubble
+    const typingId = `typing-${Date.now()}`;
+    setMessages(prev => [...prev, {
+      id: typingId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      isTyping: true
+    }]);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/advisor/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: text.trim(),
+          userProfile,
+          holdings
+        })
+      });
+
+      const data = await response.json();
+
+      // Remove typing indicator and add real response
+      setMessages(prev => {
+        const withoutTyping = prev.filter(m => m.id !== typingId);
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.answer || "I'm sorry, I couldn't generate a response. Please try again.",
+          timestamp: new Date(),
+          stocks: data.stocks || [],
+          structuredData: data.structuredData || undefined,
+        };
+        return [...withoutTyping, aiMessage];
+      });
+    } catch {
+      // Remove typing indicator and add error message
+      setMessages(prev => {
+        const withoutTyping = prev.filter(m => m.id !== typingId);
+        return [...withoutTyping, {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: "⚠️ I couldn't reach the AI service right now. Please make sure the backend server is running and try again.",
+          timestamp: new Date(),
+        }];
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const quickActions = [
@@ -206,6 +200,21 @@ export function AIAdvisor() {
     );
   };
 
+  const renderTypingIndicator = () => (
+    <div className="flex gap-4">
+      <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm bg-gradient-to-br from-indigo-500 to-purple-600">
+        <Bot className="w-6 h-6 text-white" />
+      </div>
+      <div className="flex-1 max-w-[85%]">
+        <div className="rounded-2xl p-4 shadow-sm bg-muted/40 text-foreground border border-border/50 rounded-tl-none inline-flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-primary/70 animate-bounce [animation-delay:-0.3s]" />
+          <span className="w-2 h-2 rounded-full bg-primary/70 animate-bounce [animation-delay:-0.15s]" />
+          <span className="w-2 h-2 rounded-full bg-primary/70 animate-bounce" />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="relative min-h-screen h-full flex flex-col p-8 pt-0 w-full z-0">
       <style>{`
@@ -239,6 +248,7 @@ export function AIAdvisor() {
                 key={idx}
                 variant="outline"
                 size="sm"
+                disabled={isLoading}
                 className="whitespace-nowrap rounded-full bg-background border-border/60 hover:bg-muted"
                 onClick={() => handleSend(action.label)}
               >
@@ -251,44 +261,50 @@ export function AIAdvisor() {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-4 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
-              >
-                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${message.role === 'user'
-                    ? 'bg-primary'
-                    : 'bg-gradient-to-br from-indigo-500 to-purple-600'
-                  }`}>
-                  {message.role === 'user' ? (
-                    <User className="w-5 h-5 text-white" />
-                  ) : (
-                    <Bot className="w-6 h-6 text-white" />
-                  )}
+              message.isTyping ? (
+                <div key={message.id}>
+                  {renderTypingIndicator()}
                 </div>
-                <div className={`flex-1 max-w-[85%] ${message.role === 'user' ? 'flex flex-col items-end' : ''}`}>
-                  <div className={`rounded-2xl p-4 shadow-sm ${message.role === 'user'
-                      ? 'bg-primary text-white rounded-tr-none'
-                      : 'bg-muted/40 text-foreground border border-border/50 rounded-tl-none'
+              ) : (
+                <div
+                  key={message.id}
+                  className={`flex gap-4 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
+                >
+                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${message.role === 'user'
+                      ? 'bg-primary'
+                      : 'bg-gradient-to-br from-indigo-500 to-purple-600'
                     }`}>
-                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
-
-                    {message.stocks && message.stocks.length > 0 && (
-                      <div className="flex gap-2 mt-3">
-                        {message.stocks.map((stock) => (
-                          <Badge key={stock} variant="secondary" className="text-xs bg-background">
-                            {stock}
-                          </Badge>
-                        ))}
-                      </div>
+                    {message.role === 'user' ? (
+                      <User className="w-5 h-5 text-white" />
+                    ) : (
+                      <Bot className="w-6 h-6 text-white" />
                     )}
-
-                    {message.structuredData && renderStructuredDataCard(message.structuredData)}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2 px-1 font-medium">
-                    {message.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                  </p>
+                  <div className={`flex-1 max-w-[85%] ${message.role === 'user' ? 'flex flex-col items-end' : ''}`}>
+                    <div className={`rounded-2xl p-4 shadow-sm ${message.role === 'user'
+                        ? 'bg-primary text-white rounded-tr-none'
+                        : 'bg-muted/40 text-foreground border border-border/50 rounded-tl-none'
+                      }`}>
+                      <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
+
+                      {message.stocks && message.stocks.length > 0 && (
+                        <div className="flex gap-2 mt-3 flex-wrap">
+                          {message.stocks.map((stock) => (
+                            <Badge key={stock} variant="secondary" className="text-xs bg-background">
+                              {stock}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                      {message.structuredData && renderStructuredDataCard(message.structuredData)}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2 px-1 font-medium">
+                      {message.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )
             ))}
             <div ref={messagesEndRef} />
           </div>
@@ -301,7 +317,8 @@ export function AIAdvisor() {
                 <button
                   key={idx}
                   onClick={() => handleSend(prompt)}
-                  className="text-xs px-3 py-1.5 rounded-full bg-background border border-border hover:border-primary/50 hover:text-primary transition-colors text-muted-foreground"
+                  disabled={isLoading}
+                  className="text-xs px-3 py-1.5 rounded-full bg-background border border-border hover:border-primary/50 hover:text-primary transition-colors text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {prompt}
                 </button>
@@ -311,11 +328,17 @@ export function AIAdvisor() {
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Ask your AI Copilot about stocks or portfolio performance..."
+                onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSend()}
+                placeholder={isLoading ? "AI is thinking..." : "Ask your AI Copilot about stocks or portfolio performance..."}
                 className="flex-1 border-0 focus-visible:ring-0 shadow-none bg-transparent"
+                disabled={isLoading}
               />
-              <Button onClick={() => handleSend()} size="icon" className="rounded-lg h-10 w-10 shrink-0">
+              <Button
+                onClick={() => handleSend()}
+                size="icon"
+                className="rounded-lg h-10 w-10 shrink-0"
+                disabled={isLoading || !input.trim()}
+              >
                 <Send className="w-4 h-4" />
               </Button>
             </div>
