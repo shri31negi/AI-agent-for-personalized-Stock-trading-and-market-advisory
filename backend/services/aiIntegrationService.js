@@ -5,7 +5,7 @@ class AIIntegrationService {
   constructor() {
     // Use full path to ensure Node.js child_process finds the correct Python
     // regardless of Windows PATH differences between terminal and spawned processes
-    this.pythonPath = process.env.PYTHON_PATH || 'C:\\Users\\Avni\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
+    this.pythonPath = process.env.PYTHON_PATH || 'python3';
     this.aiModulePath = path.join(__dirname, '../../ai_integration');
   }
 
@@ -182,7 +182,7 @@ class AIIntegrationService {
     });
   }
 
-  async getPrediction(symbol, modelType = 'lstm') {
+  async getPrediction(symbol, modelType = 'arima') {
     return new Promise((resolve, reject) => {
       const python = spawn(this.pythonPath, [
         path.join(this.aiModulePath, 'main.py')
