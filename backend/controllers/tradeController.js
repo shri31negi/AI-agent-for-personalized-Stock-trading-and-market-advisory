@@ -1,7 +1,7 @@
-import Trade from "../models/Trade.js";
+const Trade = require('../models/Trade');
 
 // Create a new trade
-export const createTrade = async (req, res) => {
+exports.createTrade = async (req, res) => {
     try {
         const { entryPrice, exitPrice, quantity } = req.body;
 
@@ -22,7 +22,7 @@ export const createTrade = async (req, res) => {
 };
 
 // Get all trades
-export const getTrades = async (req, res) => {
+exports.getTrades = async (req, res) => {
     try {
         const trades = await Trade.find();
         res.json(trades);
@@ -31,7 +31,7 @@ export const getTrades = async (req, res) => {
     }
 };
 
-export const getTradeStats = async (req, res) => {
+exports.getTradeStats = async (req, res) => {
     try {
         const trades = await Trade.find();
 

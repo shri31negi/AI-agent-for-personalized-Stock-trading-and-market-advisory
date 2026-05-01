@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require('mongoose');
 
 const tradeSchema = new mongoose.Schema({
     symbol: {
@@ -31,4 +31,4 @@ const tradeSchema = new mongoose.Schema({
     },
 });
 
-export default mongoose.model("Trade", tradeSchema);
+module.exports = mongoose.model("Trade", tradeSchema);
