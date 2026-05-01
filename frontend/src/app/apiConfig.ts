@@ -1,4 +1,4 @@
-// Centralized API configuration for TradeMind AI
+// Centralized API configuration for TradeMind AI - v1.1 Deployment Fix
 // In production, this should come from an environment variable
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
